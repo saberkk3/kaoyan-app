@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>考研打卡</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="topbar-title">
+        <span class="brand-dot"></span>
+        <h1>考研 11408</h1>
+      </div>
+      <button id="btnSettings" class="icon-btn" aria-label="设置">⚙</button>
+    </header>
+
+    <main class="views">
+      <section class="view active" id="view-home"></section>
+      <section class="view" id="view-plan"></section>
+      <section class="view" id="view-timer"></section>
+      <section class="view" id="view-progress"></section>
+      <section class="view" id="view-wrong"></section>
+    </main>
+
+    <nav class="tabbar">
+      <button class="tab active" data-view="home"><span class="tab-ico">🏠</span><span>首页</span></button>
+      <button class="tab" data-view="plan"><span class="tab-ico">📋</span><span>计划</span></button>
+      <button class="tab" data-view="timer"><span class="tab-ico">⏱</span><span>计时</span></button>
+      <button class="tab" data-view="progress"><span class="tab-ico">📊</span><span>进度</span></button>
+      <button class="tab" data-view="wrong"><span class="tab-ico">✏️</span><span>错题</span></button>
+    </nav>
+  </div>
+
+  <!-- 设置 -->
+  <div class="modal" id="modalSettings" hidden>
+    <div class="modal-mask" data-close="modalSettings"></div>
+    <div class="sheet">
+      <div class="sheet-head"><h2>设置</h2><button class="icon-btn" data-close="modalSettings">✕</button></div>
+      <div class="sheet-body">
+        <section class="settings-section">
+          <h3>个人</h3>
+          <label class="field">
+            <span>昵称（显示在首页欢迎语）</span>
+            <input type="text" id="setNickname" placeholder="例如：小明" />
+          </label>
+        </section>
+        <section class="settings-section">
+          <h3>外观</h3>
+          <label class="switch-row">
+            <span>深色模式</span>
+            <input type="checkbox" id="setDark" />
+          </label>
+          <div class="field">
+            <span>主题色</span>
+            <div class="swatches" id="accentSwatches"></div>
+          </div>
+        </section>
+        <section class="settings-section">
+          <h3>考试</h3>
+          <label class="field">
+            <span>初试日期</span>
+            <input type="date" id="setExamDate" />
+          </label>
+        </section>
+        <section class="settings-section">
+          <h3>目标院校</h3>
+          <button id="btnEditGoal" class="btn ghost">编辑目标院校</button>
+        </section>
+        <section class="settings-section">
+          <h3>科目管理</h3>
+          <div id="subjectList" class="subject-list"></div>
+          <button id="btnAddSubject" class="btn ghost">+ 新增科目</button>
+        </section>
+        <section class="settings-section">
+          <h3>阶段管理</h3>
+          <div id="stageList" class="stage-list"></div>
+          <button id="btnAddStage" class="btn ghost">+ 新增阶段</button>
+        </section>
+        <section class="settings-section">
+          <h3>数据</h3>
+          <p class="hint">数据存在这台设备的浏览器里，清浏览器数据会丢失。换手机前请先导出。</p>
+          <button id="btnExport" class="btn ghost">导出数据 (JSON)</button>
+          <button id="btnImport" class="btn ghost">导入数据 (JSON)</button>
+          <input type="file" id="fileImport" accept=".json" hidden />
+          <button id="btnReset" class="btn danger">清空全部数据</button>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑科目 -->
+  <div class="modal" id="modalSubject" hidden>
+    <div class="modal-mask" data-close="modalSubject"></div>
+    <div class="sheet">
+      <div class="sheet-head"><h2 id="subjectModalTitle">编辑科目</h2><button class="icon-btn" data-close="modalSubject">✕</button></div>
+      <div class="sheet-body">
+        <input type="hidden" id="subjectId" />
+        <label class="field">
+          <span>科目名称</span>
+          <input type="text" id="subjectName" placeholder="例如：数学二" />
+        </label>
+        <div class="field">
+          <span>颜色</span>
+          <div class="swatches" id="subjectSwatches"></div>
+        </div>
+        <label class="field">
+          <span>目标分数（可空）</span>
+          <input type="number" id="subjectTarget" min="0" max="500" step="1" />
+        </label>
+        <label class="field">
+          <span>模块（每行一个）</span>
+          <textarea id="subjectModules" rows="4" placeholder="高数&#10;线代&#10;概率论"></textarea>
+        </label>
+        <label class="field">
+          <span>章节（每行：模块：章节名）</span>
+          <textarea id="subjectChapters" rows="6" placeholder="数据结构：线性表&#10;数据结构：栈和队列"></textarea>
+        </label>
+        <div class="sheet-actions">
+          <button id="btnDeleteSubject" class="btn danger">删除</button>
+          <button id="btnSaveSubject" class="btn primary">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 阶段 -->
+  <div class="modal" id="modalStage" hidden>
+    <div class="modal-mask" data-close="modalStage"></div>
+    <div class="sheet">
+      <div class="sheet-head"><h2 id="stageModalTitle">编辑阶段</h2><button class="icon-btn" data-close="modalStage">✕</button></div>
+      <div class="sheet-body">
+        <input type="hidden" id="stageId" />
+        <label class="field">
+          <span>阶段名称</span>
+          <input type="text" id="stageName" placeholder="例如：基础阶段" />
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span>开始日期</span>
+            <input type="date" id="stageStart" />
+          </label>
+          <label class="field">
+            <span>结束日期</span>
+            <input type="date" id="stageEnd" />
+          </label>
+        </div>
+        <div class="sheet-actions">
+          <button id="btnDeleteStage" class="btn danger">删除</button>
+          <button id="btnSaveStage" class="btn primary">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 目标院校 -->
+  <div class="modal" id="modalGoal" hidden>
+    <div class="modal-mask" data-close="modalGoal"></div>
+    <div class="sheet">
+      <div class="sheet-head"><h2>目标院校</h2><button class="icon-btn" data-close="modalGoal">✕</button></div>
+      <div class="sheet-body">
+        <label class="field">
+          <span>院校名称</span>
+          <input type="text" id="goalSchool" placeholder="例如：XX 大学" />
+        </label>
+        <label class="field">
+          <span>专业</span>
+          <input type="text" id="goalMajor" placeholder="例如：计算机科学与技术" />
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span>目标总分</span>
+            <input type="number" id="goalTotal" min="0" max="500" step="1" />
+          </label>
+          <label class="field">
+            <span>历年复试线</span>
+            <input type="number" id="goalLine" min="0" max="500" step="1" />
+          </label>
+        </div>
+        <label class="field">
+          <span>备注</span>
+          <input type="text" id="goalNote" placeholder="例如：学硕 · 代码 11408" />
+        </label>
+        <button id="btnSaveGoal" class="btn primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加待办 -->
+  <div class="modal" id="modalTodo" hidden>
+    <div class="modal-mask" data-close="modalTodo"></div>
+    <div class="sheet">
+      <div class="sheet-head"><h2>添加待办</h2><button class="icon-btn" data-close="modalTodo">✕</button></div>
+      <div class="sheet-body">
+        <label class="field">
+          <span>任务内容</span>
+          <input type="text" id="todoText" placeholder="例如：高数 第三章习题" />
+        </label>
+        <div class="field-row">
+          <label class="field grow">
+            <span>科目</span>
+            <select id="todoSubject"></select>
+          </label>
+          <label class="field">
+            <span>预计分钟</span>
+            <input type="number" id="todoMinutes" min="5" step="5" value="30" />
+          </label>
+        </div>
+        <button id="btnSaveTodo" class="btn primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加错题 -->
+  <div class="modal" id="modalWrong" hidden>
+    <div class="modal-mask" data-close="modalWrong"></div>
+    <div class="sheet">
+      <div class="sheet-head"><h2>记一道错题</h2><button class="icon-btn" data-close="modalWrong">✕</button></div>
+      <div class="sheet-body">
+        <label class="field">
+          <span>题目 / 知识点</span>
+          <textarea id="wrongText" rows="3" placeholder="例如：数据结构 二叉树遍历 某题"></textarea>
+        </label>
+        <div class="field-row">
+          <label class="field grow">
+            <span>科目</span>
+            <select id="wrongSubject"></select>
+          </label>
+          <label class="field grow">
+            <span>模块</span>
+            <select id="wrongModule"></select>
+          </label>
+        </div>
+        <label class="field">
+          <span>错因</span>
+          <select id="wrongReason">
+            <option value="知识点没记住">知识点没记住</option>
+            <option value="粗心">粗心</option>
+            <option value="方法不会">方法不会</option>
+            <option value="没复习到">没复习到</option>
+            <option value="其他">其他</option>
+          </select>
+        </label>
+        <div class="field">
+          <span>错题照片（可选）</span>
+          <img id="wrongPhotoPreview" class="photo-preview" hidden alt="错题照片预览" />
+          <div class="photo-actions">
+            <button type="button" id="btnTakePhoto" class="btn ghost">📷 拍照</button>
+            <button type="button" id="btnPickPhoto" class="btn ghost">🖼 相册</button>
+          </div>
+          <button type="button" id="btnClearPhoto" class="link-btn danger" hidden>移除照片</button>
+          <input type="file" id="wrongPhotoCamera" accept="image/*" capture="environment" hidden />
+          <input type="file" id="wrongPhotoGallery" accept="image/*" hidden />
+        </div>
+        <button id="btnSaveWrong" class="btn primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="lightbox" id="lightbox" hidden onclick="closeLightbox()"><img id="lightboxImg" alt="错题图片" /></div>
+  <div class="toast" id="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
